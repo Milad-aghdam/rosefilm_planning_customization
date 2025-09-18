@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- Hide Role on Gantt form -->
+  <record id="planning_slot_form_hide_role" model="ir.ui.view">
+    <field name="name">planning.slot.form.hide.role</field>
+    <field name="model">planning.slot</field>
+    <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
+    <field name="priority">900</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='role_id']" position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Hide core fields -->
+  <record id="planning_slot_hide_core_rows_gantt" model="ir.ui.view">
+    <field name="name">planning.slot.hide.core.rows.gantt</field>
+    <field name="model">planning.slot</field>
+    <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
+    <field name="priority">2090</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='project_id']/.." position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='sale_line_id']/.." position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='resource_id']/.." position="attributes">
+        <attribute name="invisible">1</attribute>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- WC/Dept fields -->
+  <record id="planning_slot_form_insert_wc_dept" model="ir.ui.view">
+    <field name="name">planning.slot.form.insert.wc.dept</field>
+    <field name="model">planning.slot</field>
+    <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
+    <field name="priority">2100</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='resource_id']/.." position="after">
+        <group string="اطلاعات تولید" col="2">
+          <field name="workcenter_id" readonly="0"/>
+          <field name="department_id" readonly="0"/>
+        </group>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Add the simple Shift dropdown field -->
+  <record id="planning_slot_form_add_shift_field" model="ir.ui.view">
+    <field name="name">planning.slot.form.add.shift.field</field>
+    <field name="model">planning.slot</field>
+    <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
+    <field name="priority">2110</field>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='workcenter_id']" position="after">
+        <field name="shift_type"/>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Search filters -->
+  <record id="planning_slot_search_group_wc_dept" model="ir.ui.view">
+    <field name="name">planning.slot.search.group.wc.dept</field>
+    <field name="model">planning.slot</field>
+    <field name="inherit_id" ref="planning.planning_view_search"/>
+    <field name="priority">999</field>
+    <field name="arch" type="xml">
+      <xpath expr="//search" position="inside">
+        <filter name="group_by_workcenter"  string="بر اساس مرکز کاری"  context="{'group_by': 'workcenter_id'}"/>
+        <filter name="group_by_department" string="بر اساس دپارتمان"    context="{'group_by': 'department_id'}"/>
+      </xpath>
+    </field>
+  </record>
+  <record id="planning_view_gantt_custom_grouping" model="ir.ui.view">
+        <field name="name">planning.gantt.custom.grouping</field>
+        <field name="model">planning.slot</field>
+        <field name="inherit_id" ref="planning.planning_view_gantt"/>
+        <field name="arch" type="xml">
+            <xpath expr="//gantt" position="attributes">
+                <attribute name="default_group_by">gantt_grouping_name</attribute>
+            </xpath>
+            <xpath expr="//gantt" position="inside">
+                <field name="gantt_grouping_name"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
