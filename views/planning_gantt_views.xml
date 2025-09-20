@@ -57,7 +57,7 @@
     <field name="priority">2110</field>
     <field name="arch" type="xml">
       <xpath expr="//field[@name='workcenter_id']" position="after">
-        <field name="shift_type"/>
+        <field name="shift_type" invisible="not workcenter_id"/>
       </xpath>
     </field>
   </record>

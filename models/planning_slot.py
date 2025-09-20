@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -8,15 +9,31 @@ class PlanningSlot(models.Model):
 
     workcenter_id = fields.Many2one('mrp.workcenter', string='مرکز کاری', index=True, store=True)
     department_id = fields.Many2one('hr.department',  string='دپارتمان', index=True, store=True)
+    
+    # The shift_type field is now ONLY for work centers.
     shift_type = fields.Selection([
         ('1', 'شیفت ۱'),
         ('2', 'شیفت ۲'),
         ('3', 'شیفت ۳'),
     ], string="شیفت")
+    
     gantt_grouping_name = fields.Char(string="Gantt Label", compute='_compute_gantt_grouping_name', store=True)
 
+    @api.depends('workcenter_id', 'department_id', 'shift_type')
+    def _compute_gantt_grouping_name(self):
+        for slot in self:
+            name = slot.sudo().workcenter_id.name or slot.sudo().department_id.name or ''
+            
+            # VVVV --- THIS IS THE KEY LOGIC CHANGE --- VVVV
+            # Only add the shift label IF a workcenter is selected.
+            if slot.workcenter_id and slot.shift_type:
+                shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
+                slot.gantt_grouping_name = f"{name} - {shift_label}"
+            else:
+                # For departments, the label is just the department name.
+                slot.gantt_grouping_name = name
+
     def _get_axis_resource(self):
-        # This method is correct, no change needed
         self.ensure_one()
         if self.workcenter_id:
             if not self.workcenter_id.planning_resource_id:
@@ -29,7 +46,6 @@ class PlanningSlot(models.Model):
         return False
 
     def _sync_resource_from_axis(self):
-        # This method is correct, no change needed
         for rec in self:
             rec.resource_id = rec._get_axis_resource() or False
 
@@ -45,28 +61,8 @@ class PlanningSlot(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        _logger.info(f"--- Entering CREATE with vals: {vals_list} ---")
-        
-        for vals in vals_list:
-            resource = False
-            if vals.get('workcenter_id'):
-                workcenter = self.env['mrp.workcenter'].browse(vals['workcenter_id'])
-                if not workcenter.planning_resource_id:
-                    workcenter.action_create_planning_resource()
-                resource = workcenter.planning_resource_id
-            elif vals.get('department_id'):
-                department = self.env['hr.department'].browse(vals['department_id'])
-                if not department.planning_resource_id:
-                    department.action_create_planning_resource()
-                resource = department.planning_resource_id
-            
-            if resource:
-                vals['resource_id'] = resource.id
-                _logger.info(f"Setting resource_id to {resource.id} ({resource.name}) before create.")
-
         slots = super().create(vals_list)
-        _logger.info(f"Slots created with IDs: {slots.ids}. Now recomputing fields.")
-        # The compute method will run automatically because its dependencies changed.
+        slots._sync_resource_from_axis()
         return slots
 
     def write(self, vals):
@@ -75,30 +71,23 @@ class PlanningSlot(models.Model):
             self._sync_resource_from_axis()
         return res
         
-    def name_get(self):
-        # This method is now obsolete because the Gantt view groups by gantt_grouping_name
-        # but we can keep it for other views.
-        return super().name_get()
-
-    @api.depends('workcenter_id.name', 'department_id.name', 'shift_type', 'resource_id.name')
-    def _compute_gantt_grouping_name(self):
-        _logger.info("--- Running _compute_gantt_grouping_name ---")
-        for slot in self:
-            name = slot.sudo().workcenter_id.name or slot.sudo().department_id.name or ''
-            
-            # Fallback if name is still empty (e.g., during creation)
-            if not name and slot.resource_id:
-                name = slot.resource_id.sudo().name_get()[0][1]
-                # Clean up the name if it has [WC] or [Dept] prefixes from resource.resource name_get
-                if '[WC] ' in name: name = name.replace('[WC] ', '')
-                if '[Dept] ' in name: name = name.replace('[Dept] ', '')
-
-            shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
-            _logger.info(f"Slot ID: {slot.id or 'New'}, WC/Dept: '{name}', Shift: '{shift_label}'")
-            
-            if shift_label:
-                slot.gantt_grouping_name = f"{name} - {shift_label}"
-            else:
-                slot.gantt_grouping_name = name
-            
-            _logger.info(f"--> Computed gantt_grouping_name: '{slot.gantt_grouping_name}'")
+    @api.constrains('start_datetime', 'end_datetime', 'workcenter_id', 'shift_type')
+    def _check_duplicate_shift(self):
+        _logger.info("--- Running _check_duplicate_shift constraint ---")
+        # VVVV --- SIMPLIFIED CONSTRAINT --- VVVV
+        # This check now ONLY runs for workcenters with a shift selected.
+        for slot in self.filtered(lambda s: s.workcenter_id and s.shift_type):
+            domain = [
+                ('id', '!=', slot.id),
+                ('shift_type', '=', slot.shift_type),
+                ('workcenter_id', '=', slot.workcenter_id.id),
+                ('start_datetime', '<', slot.end_datetime),
+                ('end_datetime', '>', slot.start_datetime),
+            ]
+            if self.search_count(domain) > 0:
+                shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type)
+                name = slot.sudo().workcenter_id.name
+                raise ValidationError(
+                    _("A schedule for '%(name)s - %(shift)s' already exists for this time period. You cannot double book the same shift.",
+                      name=name, shift=shift_label)
+                )
