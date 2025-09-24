@@ -8,9 +8,10 @@ class MrpWorkcenter(models.Model):
         'resource.resource', domain=[('is_workcenter','=',True)], ondelete='set null',
         string='Planning Resource',
     )
-    planning_resource_id = fields.Many2one(
-        'resource.resource', domain=[('is_workcenter','=',True)], ondelete='set null',
-        string='Planning Resource',
+    nominal_capacity_uom_id = fields.Many2one(
+        'uom.uom', 
+        string='ظرفیت اسمی',
+        help="واحد سنجش ظرفیت اسمی این مرکز کاری (مثال: کیلوگرم در ساعت، تعداد در روز)."
     )
 
     def action_create_planning_resource(self):

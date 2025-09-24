@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-  <!-- Hide Role on Gantt form -->
   <record id="planning_slot_form_hide_role" model="ir.ui.view">
     <field name="name">planning.slot.form.hide.role</field>
     <field name="model">planning.slot</field>
@@ -14,7 +13,6 @@
     </field>
   </record>
 
-  <!-- Hide core fields -->
   <record id="planning_slot_hide_core_rows_gantt" model="ir.ui.view">
     <field name="name">planning.slot.hide.core.rows.gantt</field>
     <field name="model">planning.slot</field>
@@ -33,7 +31,6 @@
     </field>
   </record>
 
-  <!-- WC/Dept fields -->
   <record id="planning_slot_form_insert_wc_dept" model="ir.ui.view">
     <field name="name">planning.slot.form.insert.wc.dept</field>
     <field name="model">planning.slot</field>
@@ -48,21 +45,6 @@
       </xpath>
     </field>
   </record>
-
-  <!-- Add the simple Shift dropdown field -->
-  <record id="planning_slot_form_add_shift_field" model="ir.ui.view">
-    <field name="name">planning.slot.form.add.shift.field</field>
-    <field name="model">planning.slot</field>
-    <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
-    <field name="priority">2110</field>
-    <field name="arch" type="xml">
-      <xpath expr="//field[@name='workcenter_id']" position="after">
-        <field name="shift_type" invisible="not workcenter_id"/>
-      </xpath>
-    </field>
-  </record>
-
-  <!-- Search filters -->
   <record id="planning_slot_search_group_wc_dept" model="ir.ui.view">
     <field name="name">planning.slot.search.group.wc.dept</field>
     <field name="model">planning.slot</field>
@@ -87,6 +69,34 @@
                 <field name="gantt_grouping_name"/>
             </xpath>
         </field>
+    </record>
+    <record id="planning_slot_form_insert_wc_dept" model="ir.ui.view">
+      <field name="name">planning.slot.form.insert.wc.dept</field>
+      <field name="model">planning.slot</field>
+      <field name="inherit_id" ref="planning.planning_view_form_in_gantt"/>
+      <field name="priority">2100</field>
+      <field name="arch" type="xml">
+        <xpath expr="//field[@name='resource_id']/.." position="after">
+          <group string="اطلاعات تولید">
+            <group>
+              <label for="workcenter_id"/>
+              <div class="o_row">
+                <field name="workcenter_id" readonly="0" nolabel="1"/>
+                <button name="action_view_workcenter_form"
+                        type="object"
+                        icon="fa-external-link"
+                        class="btn btn-link p-0 ps-1"
+                        invisible="not workcenter_id"
+                        aria-label="Open Work Center"/>
+              </div>
+              <field name="department_id" readonly="0"/>
+            </group>
+            <group>
+              <field name="shift_type" invisible="not workcenter_id"/>
+            </group>
+          </group>
+        </xpath>
+      </field>
     </record>
 
 </odoo>

@@ -9,8 +9,6 @@ class PlanningSlot(models.Model):
 
     workcenter_id = fields.Many2one('mrp.workcenter', string='مرکز کاری', index=True, store=True)
     department_id = fields.Many2one('hr.department',  string='دپارتمان', index=True, store=True)
-    
-    # The shift_type field is now ONLY for work centers.
     shift_type = fields.Selection([
         ('1', 'شیفت ۱'),
         ('2', 'شیفت ۲'),
@@ -23,14 +21,11 @@ class PlanningSlot(models.Model):
     def _compute_gantt_grouping_name(self):
         for slot in self:
             name = slot.sudo().workcenter_id.name or slot.sudo().department_id.name or ''
-            
-            # VVVV --- THIS IS THE KEY LOGIC CHANGE --- VVVV
-            # Only add the shift label IF a workcenter is selected.
+
             if slot.workcenter_id and slot.shift_type:
                 shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
                 slot.gantt_grouping_name = f"{name} - {shift_label}"
             else:
-                # For departments, the label is just the department name.
                 slot.gantt_grouping_name = name
 
     def _get_axis_resource(self):
@@ -91,3 +86,26 @@ class PlanningSlot(models.Model):
                     _("A schedule for '%(name)s - %(shift)s' already exists for this time period. You cannot double book the same shift.",
                       name=name, shift=shift_label)
                 )
+    def action_view_workcenter_form(self):
+        """
+        This action is called by a button on the form.
+        It opens the form view of the currently selected workcenter
+        and navigates to the 'Shift Management' tab.
+        """
+        self.ensure_one()
+        if not self.workcenter_id:
+            return
+
+        # This is the correct technical name you found.
+        technical_tab_name = 'shift_management' 
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'mrp.workcenter',
+            'view_mode': 'form',
+            'res_id': self.workcenter_id.id,
+            'target': 'new',
+            'context': {
+                'default_page_name': technical_tab_name,
+            }
+        }
