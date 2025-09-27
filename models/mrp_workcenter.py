@@ -8,10 +8,24 @@ class MrpWorkcenter(models.Model):
         'resource.resource', domain=[('is_workcenter','=',True)], ondelete='set null',
         string='Planning Resource',
     )
-    nominal_capacity_uom_id = fields.Many2one(
+    primary_nominal_capacity_uom_id = fields.Many2one(
         'uom.uom', 
-        string='ظرفیت اسمی',
-        help="واحد سنجش ظرفیت اسمی این مرکز کاری (مثال: کیلوگرم در ساعت، تعداد در روز)."
+        string='ظرفیت اسمی اصلی', 
+        help="واحد سنجش اصلی برای ظرفیت اسمی این مرکز کاری (مثال: کیلوگرم در ساعت)."
+    )
+
+    secondary_nominal_capacity_uom_id = fields.Many2one(
+        'uom.uom', 
+        string='ظرفیت اسمی فرعی', 
+        help="واحد سنجش فرعی برای ظرفیت اسمی این مرکز کاری (مثال: متر در ساعت)."
+    )
+    
+    primary_capacity_value = fields.Float(
+        string="مقدار اصلی", 
+        default=1.0)
+
+    secondary_capacity_value = fields.Float(
+        string="مقدار فرعی", 
     )
 
     def action_create_planning_resource(self):

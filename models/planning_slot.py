@@ -14,19 +14,30 @@ class PlanningSlot(models.Model):
         ('2', 'شیفت ۲'),
         ('3', 'شیفت ۳'),
     ], string="شیفت")
+
+    workorder_id = fields.Many2one(
+        'mrp.workorder', 
+        string='سفارش کار',  
+        index=True
+    )
+    _sql_constraints = [
+        ('workorder_id_unique', 'UNIQUE(workorder_id)', 'این سفارش کار قبلاً برنامه ریزی شده است!')
+        
+    ]
     
     gantt_grouping_name = fields.Char(string="Gantt Label", compute='_compute_gantt_grouping_name', store=True)
 
-    @api.depends('workcenter_id', 'department_id', 'shift_type')
+    @api.depends('workcenter_id.name', 'department_id.name', 'shift_type', 'workorder_id.name')
     def _compute_gantt_grouping_name(self):
         for slot in self:
             name = slot.sudo().workcenter_id.name or slot.sudo().department_id.name or ''
-
-            if slot.workcenter_id and slot.shift_type:
+            if slot.workorder_id:
+                name = f"{name} - {slot.sudo().workorder_id.name}"
+            elif slot.workcenter_id and slot.shift_type:
                 shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
-                slot.gantt_grouping_name = f"{name} - {shift_label}"
-            else:
-                slot.gantt_grouping_name = name
+                name = f"{name} - {shift_label}"
+            
+            slot.gantt_grouping_name = name
 
     def _get_axis_resource(self):
         self.ensure_one()

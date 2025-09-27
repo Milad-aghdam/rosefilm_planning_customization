@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="mrp_workcenter_view_form_inherit_add_nominal_capacity" model="ir.ui.view">
         <field name="name">mrp.workcenter.form.inherit.nominal.capacity</field>
         <field name="model">mrp.workcenter</field>
         <field name="inherit_id" ref="mrp.mrp_workcenter_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='default_capacity']" position="after">
-                <field name="nominal_capacity_uom_id"/>
+            <xpath expr="//group[@name='capacity']" position="after">
+                <group string="نرخ تبدیل ظرفیت" name="capacity_conversion_rate">
+                    <label for="primary_capacity_value" string="ظرفیت اسمی اصلی"/>
+                    <div class="o_row">
+                        <field name="primary_capacity_value" nolabel="1"/>
+                        <field name="primary_nominal_capacity_uom_id" nolabel="1" placeholder="واحد"/>
+                    </div>
+                    <label for="secondary_capacity_value" string="برابر است با"/>
+                    <div class="o_row">
+                        <field name="secondary_capacity_value" nolabel="1"/>
+                        <field name="secondary_nominal_capacity_uom_id" nolabel="1" placeholder="واحد"/>
+                    </div>
+                </group>
             </xpath>
         </field>
     </record>
-
 </odoo>
