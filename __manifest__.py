@@ -8,6 +8,7 @@
     'data': [
         'views/planning_gantt_views.xml',
         'views/mrp_workcenter_views.xml',
+        'views/mrp_production_views.xml',
     ],
     'sequence': 10,
     'installable': True,

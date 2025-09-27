@@ -14,7 +14,8 @@ class PlanningSlot(models.Model):
         ('2', 'شیفت ۲'),
         ('3', 'شیفت ۳'),
     ], string="شیفت")
-
+    
+    gantt_grouping_name = fields.Char(string="Gantt Label", compute='_compute_gantt_grouping_name', store=True)
     workorder_id = fields.Many2one(
         'mrp.workorder', 
         string='سفارش کار',  
@@ -24,20 +25,26 @@ class PlanningSlot(models.Model):
         ('workorder_id_unique', 'UNIQUE(workorder_id)', 'این سفارش کار قبلاً برنامه ریزی شده است!')
         
     ]
-    
-    gantt_grouping_name = fields.Char(string="Gantt Label", compute='_compute_gantt_grouping_name', store=True)
 
-    @api.depends('workcenter_id.name', 'department_id.name', 'shift_type', 'workorder_id.name')
+    @api.depends('workcenter_id.name', 'department_id.name', 'shift_type', 'resource_id.name')
     def _compute_gantt_grouping_name(self):
+        _logger.info("--- Running _compute_gantt_grouping_name ---")
         for slot in self:
             name = slot.sudo().workcenter_id.name or slot.sudo().department_id.name or ''
-            if slot.workorder_id:
-                name = f"{name} - {slot.sudo().workorder_id.name}"
-            elif slot.workcenter_id and slot.shift_type:
-                shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
-                name = f"{name} - {shift_label}"
+            if not name and slot.resource_id:
+                name = slot.resource_id.sudo().name_get()[0][1]
+                if '[WC] ' in name: name = name.replace('[WC] ', '')
+                if '[Dept] ' in name: name = name.replace('[Dept] ', '')
+
+            shift_label = dict(self._fields['shift_type'].selection).get(slot.shift_type, '')
+            _logger.info(f"Slot ID: {slot.id or 'New'}, WC/Dept: '{name}', Shift: '{shift_label}'")
             
-            slot.gantt_grouping_name = name
+            if shift_label:
+                slot.gantt_grouping_name = f"{name} - {shift_label}"
+            else:
+                slot.gantt_grouping_name = name
+            
+            _logger.info(f"--> Computed gantt_grouping_name: '{slot.gantt_grouping_name}'")
 
     def _get_axis_resource(self):
         self.ensure_one()
@@ -64,11 +71,30 @@ class PlanningSlot(models.Model):
     def _onchange_department_id(self):
         if self.department_id:
             self.workcenter_id = False
-
+            
     @api.model_create_multi
     def create(self, vals_list):
+        _logger.info(f"--- Entering CREATE with vals: {vals_list} ---")
+        
+        for vals in vals_list:
+            resource = False
+            if vals.get('workcenter_id'):
+                workcenter = self.env['mrp.workcenter'].browse(vals['workcenter_id'])
+                if not workcenter.planning_resource_id:
+                    workcenter.action_create_planning_resource()
+                resource = workcenter.planning_resource_id
+            elif vals.get('department_id'):
+                department = self.env['hr.department'].browse(vals['department_id'])
+                if not department.planning_resource_id:
+                    department.action_create_planning_resource()
+                resource = department.planning_resource_id
+            
+            if resource:
+                vals['resource_id'] = resource.id
+                _logger.info(f"Setting resource_id to {resource.id} ({resource.name}) before create.")
+
         slots = super().create(vals_list)
-        slots._sync_resource_from_axis()
+        _logger.info(f"Slots created with IDs: {slots.ids}. Now recomputing fields.")
         return slots
 
     def write(self, vals):
@@ -80,8 +106,7 @@ class PlanningSlot(models.Model):
     @api.constrains('start_datetime', 'end_datetime', 'workcenter_id', 'shift_type')
     def _check_duplicate_shift(self):
         _logger.info("--- Running _check_duplicate_shift constraint ---")
-        # VVVV --- SIMPLIFIED CONSTRAINT --- VVVV
-        # This check now ONLY runs for workcenters with a shift selected.
+
         for slot in self.filtered(lambda s: s.workcenter_id and s.shift_type):
             domain = [
                 ('id', '!=', slot.id),
@@ -107,7 +132,6 @@ class PlanningSlot(models.Model):
         if not self.workcenter_id:
             return
 
-        # This is the correct technical name you found.
         technical_tab_name = 'shift_management' 
 
         return {

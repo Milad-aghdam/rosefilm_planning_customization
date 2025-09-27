@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="mrp_production_form_inherit_capacity_allin1" model="ir.ui.view">
+    <field name="name">mrp.production.form.inherit.capacity.allin1</field>
+    <field name="model">mrp.production</field>
+    <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+    <field name="arch" type="xml">
+
+      <!-- Block: Planning Request (above the notebook) -->
+      <xpath expr="//sheet/notebook" position="before">
+        <group name="rf_planning_request" string="درخواست برنامه‌ریزی" class="o_inner_group">
+          <group>
+            <field name="requested_workcenter_id" string="مرکز کاری درخواستی" options="{'no_open': True}"/>
+            <field name="requested_shift_type"  string="شیفت درخواستی"/>
+          </group>
+          <group>
+            <field name="requested_date"             string="تاریخ درخواستی"/>
+            <field name="requested_duration_minutes" string="دقایق درخواستی"/>
+          </group>
+        </group>
+      </xpath>
+
+      <!-- Header: Check Capacity button (depends on the 4 fields above) -->
+      <xpath expr="//header" position="inside">
+        <button name="action_check_planning_capacity"
+                type="object"
+                class="oe_highlight"
+                string="بررسی ظرفیت"
+                invisible="not (requested_workcenter_id and requested_shift_type and requested_date and requested_duration_minutes)"/>
+      </xpath>
+
+    </field>
+  </record>
+</odoo>

@@ -43,25 +43,17 @@
       <xpath expr="//field[@name='resource_id']/.." position="after">
         <group string="اطلاعات تولید">
           <group>
-            <!-- First Column -->
             <label for="workcenter_id"/>
             <div class="o_row">
               <field name="workcenter_id" readonly="0" nolabel="1"/>
-              <button name="action_view_workcenter_form"
-                      type="object"
-                      icon="fa-external-link"
-                      class="btn btn-link p-0 ps-1"
-                      invisible="not workcenter_id"
-                      aria-label="Open Work Center"/>
+
             </div>
             <field name="department_id" readonly="0"/>
           </group>
           <group>
             <!-- Second Column -->
             <field name="shift_type" invisible="not workcenter_id"/>
-            <field name="workorder_id" 
-                   invisible="not workcenter_id"
-                   domain="[('workcenter_id', '=', workcenter_id), ('state', 'in', ['ready', 'pending'])]"/>
+
           </group>
         </group>
       </xpath>
