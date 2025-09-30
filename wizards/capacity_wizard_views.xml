@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mrp_production_capacity_wizard_form" model="ir.ui.view">
+        <field name="name">mrp.production.capacity.wizard.form</field>
+        <field name="model">mrp.production.capacity.wizard</field>
+        <field name="arch" type="xml">
+            <form string="نتیجه بررسی ظرفیت">
+                <group>
+                    <field name="message" nolabel="1"/>
+                </group>
+                <footer>
+                    <button string="تایید" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
