@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_mrp_production_capacity_wizard_form" model="ir.ui.view">
-        <field name="name">mrp.production.capacity.wizard.form</field>
-        <field name="model">mrp.production.capacity.wizard</field>
-        <field name="arch" type="xml">
-            <form string="نتیجه بررسی ظرفیت">
-                <group>
-                    <field name="message" nolabel="1"/>
-                </group>
-                <footer>
-                    <button string="تایید" class="btn-primary" special="cancel"/>
-                </footer>
-            </form>
-        </field>
-    </record>
+  <record id="view_mrp_production_capacity_wizard_form" model="ir.ui.view">
+    <field name="name">mrp.production.capacity.wizard.form</field>
+    <field name="model">mrp.production.capacity.wizard</field>
+    <field name="arch" type="xml">
+      <form string="نتیجه بررسی ظرفیت" create="0" edit="0">
+        <sheet>
+          <group col="1" class="o_group o_form_full">
+            <field name="message" nolabel="1" widget="html" class="o_full_width"/>
+          </group>
+        </sheet>
+        <footer>
+          <!-- دکمهٔ اعمال تاریخ فقط وقتی proposed_date ست باشد -->
+          <button string="اعمال همین تاریخ"
+                  type="object"
+                  name="action_apply_date"
+                  class="btn-primary"
+                  modifiers='{"invisible": [["proposed_date","=",false]]}'/>
+          <button string="تایید" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
 </odoo>

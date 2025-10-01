@@ -5,24 +5,17 @@
     <field name="model">mrp.production</field>
     <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
     <field name="arch" type="xml">
-
-      <!-- REMOVED the capacity_check_result field and its group -->
       <xpath expr="//sheet/notebook" position="before">
         <group name="rf_planning_request" string="درخواست برنامه‌ریزی">
           <group>
-            <field name="requested_workcenter_id" string="مرکز کاری درخواستی" options="{'no_open': True}"/>
-            <field name="requested_shift_type"  string="شیفت درخواستی"/>
+            <field name="requested_workcenter_id" string="مرکز کاری درخواستی" options="{'no_open': true}"/>
+            <field name="requested_shift_type" string="شیفت درخواستی"/>
           </group>
           <group>
-            <field name="requested_date"        string="تاریخ درخواستی"/>
+            <field name="requested_date" string="تاریخ درخواستی"/>
             <label for="requested_duration_minutes" string="دقایق درخواستی"/>
             <div class="o_row">
-              <field name="requested_duration_minutes"/>
-              <button name="action_recalculate_remaining_duration"
-                      type="object"
-                      icon="fa-refresh"
-                      class="btn-sm btn-link"
-                      help="محاسبه مجدد زمان باقی‌مانده (زمان کل - زمان برنامه‌ریزی شده)"/>
+              <field name="requested_duration_minutes" nolabel="1" readonly="1"/>
             </div>
           </group>
         </group>
@@ -32,10 +25,8 @@
         <button name="action_check_planning_capacity"
                 type="object"
                 class="oe_highlight"
-                string="بررسی ظرفیت / یافتن اولین فرصت"
-                invisible="not (requested_workcenter_id and requested_shift_type and requested_duration_minutes > 0)"/>
+                string="بررسی ظرفیت / یافتن اولین فرصت"/>
       </xpath>
-
     </field>
   </record>
 </odoo>
